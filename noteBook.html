@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List with Name Search and Item Count</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .todo-container {
+            max-width: 400px;
+            margin: 0 auto;
+        } 
+
+        .todo-item {
+            margin: 15px;
+        }
+
+        .todo-item input[type="button"] {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        #todo-count {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="todo-container">
+        <h1>Note Book</h1>
+        <label>Search Notes : </label>
+        <input type="text" id="search" placeholder="Search by Name">
+        <p id="total-todo-count">Total Notes: 0</p>
+        <p id="visible-todo-count">Showing : 0</p>
+    </div>
+
+    <form id="todo-form" onsubmit="addTodo(event)">
+        <label>Note Title : </label>
+        <input type="text" id="todo-name" placeholder="Name" required><br />
+        <p>Note Discription : </p>
+        <textarea rows="10" cols="25" id="todo-description" placeholder="Description"></textarea> <br />
+        <button value="Add to Book">submit</button>
+    </form>
+    <div id="todo-list">
+        <!-- To-Do items will be added here -->
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
+    <script>
+        // Function to add a new to-do item
+        async function addTodo(event) {
+            event.preventDefault();
+            var name = document.getElementById("todo-name").value;
+            var description = document.getElementById("todo-description").value;
+            // Clear input fields
+            document.getElementById("todo-name").value = "";
+            document.getElementById("todo-description").value = "";
+
+            let saveObj = {
+                name,
+                description
+            }
+               
+                try {
+                    const response1 = await axios.post("https://crudcrud.com/api/4c4fbe7d16564efcb7d287587d3fc327/appointmentdata", saveObj)
+                    addTodoList(response1.data);
+                    filterTodoList();
+                } catch (err) {
+                    console.log(err);
+                }
+        }
+
+        // Function to delete a to-do item
+        function deleteTodo(button) {
+            var todoItem = button.parentElement;
+            todoItem.remove();
+
+            // Update the count
+            updateTodoCount();
+        }
+
+        // Function to update the todo count
+        function updateTodoCount() {
+            var todoItems = document.getElementsByClassName("todo-item");
+            var totalTodoCount = todoItems.length;
+
+            document.getElementById("total-todo-count").innerText = `Total items: ${totalTodoCount}`;
+
+            var searchValue = document.getElementById("search").value.toLowerCase();
+            if (searchValue) {
+                // If search is used, count visible items
+                var visibleTodoCount = Array.from(todoItems).filter(function (item) {
+                    var todoName = item.getElementsByClassName("todo-name")[0].innerText.toLowerCase();
+                    return todoName.includes(searchValue);
+                }).length;
+
+                document.getElementById("visible-todo-count").innerText = `Visible items: ${visibleTodoCount}`;
+            } else {
+                // If search is not used, show total count
+                document.getElementById("visible-todo-count").innerText = `Visible items: ${totalTodoCount}`;
+            }
+        }
+
+        // Function to filter the to-do list based on the search input (name only)
+        function filterTodoList() {
+            var searchValue = document.getElementById("search").value.toLowerCase();
+            var todoItems = document.getElementsByClassName("todo-item");
+
+            for (var i = 0; i < todoItems.length; i++) {
+                var todoName = todoItems[i].getElementsByClassName("todo-name")[0].innerText.toLowerCase();
+
+                if (todoName.includes(searchValue)) {
+                    todoItems[i].style.display = "";
+                } else {
+                    todoItems[i].style.display = "none";
+                }
+            }
+
+            // Update the count
+            updateTodoCount();
+        }
+
+        document.getElementById("search").addEventListener("input", filterTodoList);
+
+        const addTodoList = (element) => {
+            let todoItem = document.createElement("div");
+            todoItem.classList.add("todo-item");
+            console.log(element.name);
+            todoItem.innerHTML = `
+            <div class="todo-name"><strong>${element.name}</strong></div>
+            <div class="todo-description">${element.description}</div>
+            <button onclick="deleteTodo(this)">Delete</button>
+        `;
+            document.getElementById("todo-list").appendChild(todoItem);
+            updateTodoCount();
+
+        }
+        window.addEventListener(("DOMContentLoaded"), loadFunc);
+        async function loadFunc() {
+            try {
+                const response1 = await axios.get('https://crudcrud.com/api/4c4fbe7d16564efcb7d287587d3fc327/appointmentdata')
+                for (let i = 0; i < response1.data.length; i++) {
+                    addTodoList(response1.data[i]);
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+    </script>
+</body>
+
+</html>
